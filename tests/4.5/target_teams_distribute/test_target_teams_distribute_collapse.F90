@@ -10,7 +10,7 @@
 
 #include "ompvv.F90"
 
-#define N 512
+#define N 128
 
       PROGRAM test_target_teams_distribute_collapse
         USE iso_fortran_env
@@ -20,6 +20,9 @@
         INTEGER :: errors
         errors = 0
 
+        OMPVV_WARNING("Testing of collasping cannot be tested.")
+        OMPVV_WARNING("Test only verifies that the collapse doesn't collapse")
+        OMPVV_WARNING("too many loops.")
         OMPVV_TEST_VERBOSE(test_collapse1() .ne. 0)
         OMPVV_TEST_VERBOSE(test_collapse2() .ne. 0)
         OMPVV_REPORT_AND_RETURN()
@@ -62,10 +65,6 @@
               END DO
             END DO
 
-            IF (num_teams .eq. 1) THEN
-              OMPVV_WARNING("Test operated with one team. Parallelism of teams")
-              OMPVV_WARNING("distribute can't be guarunteed.")
-            END IF
             test_collapse1 = errors
           END FUNCTION test_collapse1
 
