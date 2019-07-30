@@ -18,29 +18,36 @@ int main() {
   int errors = 0;
   int first_max_threads, first_num_threads, first_dynamic;
   int second_num_threads;
+  int *threads_arr;
   int *num_threads_arr;
   int *max_threads_arr;
   int *dynamic_arr;
 
   //Check num_ and max_threads ICVs in target region 1
-#pragma omp target parallel map(from:first_num_threads, first_max_threads)
+#pragma omp target map(from:first_num_threads, first_max_threads, first_dynamic)
   {
-#pragma omp master
-    {
       first_num_threads = omp_get_num_threads();
       first_max_threads = omp_get_max_threads();
       first_dynamic = omp_get_dynamic();
-    }
   }
 
-  num_threads_arr = (int *) malloc(first_num_threads*sizeof(int));
-  max_threads_arr = (int *) malloc(first_num_threads*sizeof(int));
-  dynamic_arr = (int *) malloc(first_num_threads*sizeof(int));
+  threads_arr = (int *) malloc(first_max_threads*sizeof(int));
+  num_threads_arr = (int *) malloc(first_max_threads*sizeof(int));
+  max_threads_arr = (int *) malloc(first_max_threads*sizeof(int));
+  dynamic_arr = (int *) malloc(first_max_threads*sizeof(int));
 
+  for (int i = 0; i < first_max_threads; i ++) {
+    threads_arr[i]=0;
+    num_threads_arr[i] = 0;
+    max_threads_arr[i] = 0;
+    dynamic_arr[i] = 0;
+  }
   //Check num_ and max_threads ICVs in target region 2
-#pragma omp target parallel map(from:num_threads_arr[0:first_num_threads], max_threads_arr[0:first_num_threads], dynamic_arr[0:first_num_threads])
+#pragma omp target parallel map(from:num_threads_arr[0:first_max_threads], max_threads_arr[0:first_max_threads], dynamic_arr[0:first_max_threads], threads_arr[0:first_max_threads])
   {
     int thread_id = omp_get_thread_num();
+    #pragma omp atomic
+    threads_arr[thread_id]++;
     num_threads_arr[thread_id] = omp_get_num_threads();
     max_threads_arr[thread_id] = omp_get_max_threads();
     dynamic_arr[thread_id] = omp_get_dynamic();
@@ -58,9 +65,18 @@ int main() {
   printf("Num threads r1: %d\n", first_num_threads);
   printf("Max threads r1: %d\n", first_max_threads);
   printf("Dynamic r1: %d\n", first_dynamic);
-  printf("Num threads r2: %d\n", num_threads_arr[0]);
-  printf("Max threads r2: %d\n", max_threads_arr[0]);
-  printf("Dynamic r2: %d\n", dynamic_arr[0]);
+  printf("threads r2: ");
+  for (int i = 0; i < first_max_threads; i ++)
+    printf("%d  ", threads_arr[i]);
+  printf("\nNum threads r2: ");
+  for (int i = 0; i < first_max_threads; i ++)
+    printf("%d  ", num_threads_arr[i]);
+  printf("\nMax threads r2: ");
+  for (int i = 0; i < first_max_threads; i ++)
+    printf("%d  ", max_threads_arr[i]);
+  printf("\nDynamic r2: ");
+  for (int i = 0; i < first_max_threads; i ++)
+    printf("%d  ", dynamic_arr[i]);
 
   return errors;
 }
