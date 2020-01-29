@@ -1,70 +1,64 @@
-! @@name:        Example_array_issues.1b.f90
-! @@type:        F-free
-! @@compilable:  yes
-! @@linkable:    no
-! @@expect:      success
+!===--- array_property.F90 -------------------------------------------------===//
+!
+! OpenMP API Version 4.5 Nov 2015
+!
+!
+!
+!===------------------------------------------------------------------------===//
+
+#include "ompvv.F90"
+
+#define N 1024
+
 MODULE example
-
-  ! ADDED OMP DECLARE - Missing from online example.
-  !$omp declare target (A)
   REAL(8), ALLOCATABLE :: A(:)
-
+  !$omp declare target (A)
 CONTAINS
-  SUBROUTINE initialize(N)
-    INTEGER :: N
-
-    ALLOCATE(A(N))
+  SUBROUTINE initialize(len)
+    INTEGER,INTENT(in) :: len
+    ALLOCATE(A(len))
     !$omp target enter data map(alloc:A)
-
   END SUBROUTINE initialize
 
   SUBROUTINE finalize()
-
     !$omp target exit data map(delete:A)
     DEALLOCATE(A)
-
   END SUBROUTINE finalize
 END MODULE example
 
-
 PROGRAM fmain
-  use example
-
+  USE iso_fortran_env
+  USE ompvv_lib
+  USE omp_lib
+  USE example
   implicit none
+  INTEGER:: x
+  OMPVV_TEST_OFFLOADING
+  OMPVV_TEST_SHARED_ENVIRONMENT
 
-  CALL initialize(5)
+  CALL initialize(N)
 
   A(:) = 1.0
-
-  PRINT *, "host, before: ", A(:)
 
   !$omp target update to(A)
 
   !$omp target map(A)
-  CALL foo()
+  CALL modify()
   !$omp end target
 
   !$omp target update from(A)
 
-  PRINT *, "Host, after: ", A(:)
-
+  DO x = 1, N
+     OMPVV_TEST_VERBOSE(A(x) .ne. 2.0)
+  END DO
+  
   CALL finalize()
+  OMPVV_REPORT_AND_RETURN()
 END PROGRAM fmain
 
-SUBROUTINE foo()
+SUBROUTINE modify()
   use example
   implicit none
-
   !$omp declare target
-
-  ! This write doesn't work.
-  WRITE (*,*) "Device, before:", A(:)
   A(:) = 2.0
-  A(1) = 2.0
-  ! This write doesn't work.
-  WRITE (*,*) "Device, after: ", A(:)
-  ! This one works.
-  WRITE (*,*) "Device, after: ", A(1)
-  RETURN
-
-END SUBROUTINE foo
+END SUBROUTINE modify
