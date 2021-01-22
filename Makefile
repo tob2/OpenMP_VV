@@ -334,6 +334,31 @@ $(CURDIR)/tests/4.5/application_kernels/qmcpack_target_static_lib.c.o: $(CURDIR)
 	-$(call log_section_footer,"RUN",$(SYSTEM),$$(cat $(LOGTEMPFILE)),$(LOG_NOTE),$(notdir $(@:.FOR.run=.log)))
 	-@$(if $(LOG), rm $(LOGTEMPFILE))
 
+# Special case with setting -env OMP_TARGET_OFFLOAD to MANDATORY, DISABLED, DEFAULT
+$(BINDIR)/test_omp_target_offload.c.run: $(OBJS_C)
+	$(call log_section_header,"RUN",$(SYSTEM),$(@:.run=)-MANDATORY,$(LOG_NOTE),$(OMP_VERSION),$(notdir $(@:.run=.log)))
+	@echo -e $(TXTGRN)"\n\n" running: $@ OMP_TARGET_OFFLOAD=MANDATORY $(TXTNOC) $(if $(LOG), ${RECORD}$(notdir $(@:.run=.log)))
+	-$(call loadModules,$(C_COMPILER_MODULE)) $(BSRUN)$(RUN_TEST) -env OMP_TARGET_OFFLOAD=MANDATORY $(@:.run=.o) $(VERBOSE) $(if $(LOG),$(RECORD)$(notdir $(@:.run=.log))\
+		&& echo "PASS" > $(LOGTEMPFILE) \
+		|| echo "FAIL" > $(LOGTEMPFILE))
+	-$(call log_section_footer,"RUN",$(SYSTEM),$$(cat $(LOGTEMPFILE)),$(LOG_NOTE),$(notdir $(@:.run=.log)))
+	-@$(if $(LOG), rm $(LOGTEMPFILE))
+	$(call log_section_header,"RUN",$(SYSTEM),$(@:.run=)-DISABLED,$(LOG_NOTE),$(OMP_VERSION),$(notdir $(@:.run=.log)))
+	@echo -e $(TXTGRN)"\n\n" running: $@ OMP_TARGET_OFFLOAD=DISABLED $(TXTNOC) $(if $(LOG), ${RECORD}$(notdir $(@:.run=.log)))
+	-$(call loadModules,$(C_COMPILER_MODULE)) $(BSRUN)$(RUN_TEST) -env OMP_TARGET_OFFLOAD=DISABLED $(@:.run=.o) $(VERBOSE) $(if $(LOG),$(RECORD)$(notdir $(@:.run=.log))\
+		&& echo "PASS" > $(LOGTEMPFILE) \
+		|| echo "FAIL" > $(LOGTEMPFILE))
+	-$(call log_section_footer,"RUN",$(SYSTEM),$$(cat $(LOGTEMPFILE)),$(LOG_NOTE),$(notdir $(@:.run=.log)))
+	-@$(if $(LOG), rm $(LOGTEMPFILE))
+	$(call log_section_header,"RUN",$(SYSTEM),$(@:.run=)-DEFAULT,$(LOG_NOTE),$(OMP_VERSION),$(notdir $(@:.run=.log)))
+	@echo -e $(TXTGRN)"\n\n" running: $@ OMP_TARGET_OFFLOAD=DEFAULT $(TXTNOC) $(if $(LOG), ${RECORD}$(notdir $(@:.run=.log)))
+	-$(call loadModules,$(C_COMPILER_MODULE)) $(BSRUN)$(RUN_TEST) -env OMP_TARGET_OFFLOAD=DEFAULT $(@:.run=.o) $(VERBOSE) $(if $(LOG),$(RECORD)$(notdir $(@:.run=.log))\
+		&& echo "PASS" > $(LOGTEMPFILE) \
+		|| echo "FAIL" > $(LOGTEMPFILE))
+	-$(call log_section_footer,"RUN",$(SYSTEM),$$(cat $(LOGTEMPFILE)),$(LOG_NOTE),$(notdir $(@:.run=.log)))
+	-@$(if $(LOG), rm $(LOGTEMPFILE))
+
+
 ##################################################
 # Running only no compile rules
 ##################################################
@@ -356,7 +381,8 @@ $(CURDIR)/tests/4.5/application_kernels/qmcpack_target_static_lib.c.o: $(CURDIR)
 		|| echo "FAIL" > $(LOGTEMPFILE))
 	-$(call log_section_footer,"RUN",$(SYSTEM),$$(cat $(LOGTEMPFILE)),$(LOG_NOTE),$(notdir $(@:.runonly=.log)))
 	-@$(if $(LOG), rm $(LOGTEMPFILE))
-# run c app rule
+
+# run Fortran app rule
 %.FOR.runonly:
 	$(call log_section_header,"RUN",$(SYSTEM),$(@:.FOR.runonly=),$(LOG_NOTE),$(OMP_VERSION),$(notdir $(@:.FOR.runonly=.log)))
 	@echo -e $(TXTGRN)"\n\n" running previously compiled: $@ $(TXTNOC) $(if $(LOG), ${RECORD}$(notdir $(@:.FOR.runonly=.log)))
@@ -364,6 +390,30 @@ $(CURDIR)/tests/4.5/application_kernels/qmcpack_target_static_lib.c.o: $(CURDIR)
 		&& echo "PASS" > $(LOGTEMPFILE) \
 		|| echo "FAIL" > $(LOGTEMPFILE))
 	-$(call log_section_footer,"RUN",$(SYSTEM),$$(cat $(LOGTEMPFILE)),$(LOG_NOTE),$(notdir $(@:.FOR.runonly=.log)))
+	-@$(if $(LOG), rm $(LOGTEMPFILE))
+
+# Special case with setting -env OMP_TARGET_OFFLOAD to MANDATORY, DISABLED, DEFAULT
+$(BINDIR)/test_omp_target_offload.c.runonly:
+	$(call log_section_header,"RUN",$(SYSTEM),$(@:.runonly=)-MANDATORY,$(LOG_NOTE),$(OMP_VERSION),$(notdir $(@:.runonly=.log)))
+	@echo -e $(TXTGRN)"\n\n" running previously compiled: $@ OMP_TARGET_OFFLOAD=MANDATORY $(TXTNOC) $(if $(LOG), ${RECORD}$(notdir $(@:.runonly=.log)))
+	-$(call loadModules,$(C_COMPILER_MODULE)) $(BSRUN)$(RUN_TEST) -env OMP_TARGET_OFFLOAD=MANDATORY $(@:.runonly=.o) $(VERBOSE) $(if $(LOG),$(RECORD)$(notdir $(@:.runonly=.log))\
+		&& echo "PASS" > $(LOGTEMPFILE) \
+		|| echo "FAIL" > $(LOGTEMPFILE))
+	-$(call log_section_footer,"RUN",$(SYSTEM),$$(cat $(LOGTEMPFILE)),$(LOG_NOTE),$(notdir $(@:.runonly=.log)))
+	-@$(if $(LOG), rm $(LOGTEMPFILE))
+	$(call log_section_header,"RUN",$(SYSTEM),$(@:.runonly=)-DISABLED,$(LOG_NOTE),$(OMP_VERSION),$(notdir $(@:.runonly=.log)))
+	@echo -e $(TXTGRN)"\n\n" running previously compiled: $@ OMP_TARGET_OFFLOAD=DISABLED $(TXTNOC) $(if $(LOG), ${RECORD}$(notdir $(@:.runonly=.log)))
+	-$(call loadModules,$(C_COMPILER_MODULE)) $(BSRUN)$(RUN_TEST) -env OMP_TARGET_OFFLOAD=DISABLED $(@:.runonly=.o) $(VERBOSE) $(if $(LOG),$(RECORD)$(notdir $(@:.runonly=.log))\
+		&& echo "PASS" > $(LOGTEMPFILE) \
+		|| echo "FAIL" > $(LOGTEMPFILE))
+	-$(call log_section_footer,"RUN",$(SYSTEM),$$(cat $(LOGTEMPFILE)),$(LOG_NOTE),$(notdir $(@:.runonly=.log)))
+	-@$(if $(LOG), rm $(LOGTEMPFILE))
+	$(call log_section_header,"RUN",$(SYSTEM),$(@:.runonly=)-DEFAULT,$(LOG_NOTE),$(OMP_VERSION),$(notdir $(@:.runonly=.log)))
+	@echo -e $(TXTGRN)"\n\n" running previously compiled: $@ OMP_TARGET_OFFLOAD=DEFAULT $(TXTNOC) $(if $(LOG), ${RECORD}$(notdir $(@:.runonly=.log)))
+	-$(call loadModules,$(C_COMPILER_MODULE)) $(BSRUN)$(RUN_TEST) -env OMP_TARGET_OFFLOAD=DEFAULT $(@:.runonly=.o) $(VERBOSE) $(if $(LOG),$(RECORD)$(notdir $(@:.runonly=.log))\
+		&& echo "PASS" > $(LOGTEMPFILE) \
+		|| echo "FAIL" > $(LOGTEMPFILE))
+	-$(call log_section_footer,"RUN",$(SYSTEM),$$(cat $(LOGTEMPFILE)),$(LOG_NOTE),$(notdir $(@:.runonly=.log)))
 	-@$(if $(LOG), rm $(LOGTEMPFILE))
 
 # Creates the BINDIR folder

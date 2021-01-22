@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-#  USAGE: ./run_test.sh <APP> <LOG>.
+#  USAGE: ./run_test.sh [-env A=B ...] <APP> [<LOG>].
+#    -env var=val: set environment variable; can be used multiple times
 #    <LOG>: if present then it will  output of the tests in LOG.
 
 export OMP_THREAD_LIMIT=$(lscpu -p | grep -c "^[0-9]")
@@ -24,6 +25,16 @@ function report ()
     echo "$1: $msg. exit code: $2"
   fi
 }
+
+while [[ "$1" = "-env" ]]; do
+  if [[ "$2" = *=* ]]; then
+    export "$2"
+  else
+    echo "ERROR: Invalid -env argument: '$2'"
+    exit -1
+  fi
+  shift 2
+done
 
 if [ "$#" -lt "1" ]; then
   exit -1
