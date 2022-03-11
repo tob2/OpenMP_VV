@@ -8,6 +8,7 @@
 #define __FILENAME__ __FILE__
 #define OMPVV_HEADER_FMT(header) '("[header ",A,":",I0,"] ",A)'
 #define OMPVV_HEADER_RESULT_FMT '("[OMPVV_RESULT ",A,"] Test ",A," on the ",A,".")'
+#define OMPVV_HEADER_RESULT_SHORT_FMT '("[OMPVV_RESULT ",A,"] Test ",A,".")'
 
 #ifndef EXIT_SUCCESS
 #define EXIT_SUCCESS 0
@@ -105,7 +106,10 @@ module ompvv_lib
   use iso_fortran_env
   implicit none
 OMPVV_MODULE_REQUIRES_LINE
-    LOGICAL, PRIVATE :: ompvv_isHost
+    INTEGER, PRIVATE, PARAMETER :: ompvv_state_unset = 0
+    INTEGER, PRIVATE, PARAMETER :: ompvv_state_true = 1
+    INTEGER, PRIVATE, PARAMETER :: ompvv_state_false = 2
+    INTEGER, PRIVATE :: ompvv_isHost = ompvv_state_unset
     INTEGER, PRIVATE :: ompvv_errors = 0
     LOGICAL, PRIVATE :: ompvv_sharedEnv
   contains
@@ -125,9 +129,10 @@ OMPVV_MODULE_REQUIRES_LINE
 
     ! Sets the isHost variable checking if it is device or hosts
     subroutine test_offloading_probe()
-      ompvv_isHost = .false.
+      ompvv_isHost = ompvv_state_false
 !$omp target map(from:ompvv_isHost)
-      ompvv_isHost = omp_is_initial_device()
+      if (omp_is_initial_device()) &
+        ompvv_isHost = ompvv_state_true;
 !$omp end target
     end subroutine test_offloading_probe
 
@@ -144,8 +149,9 @@ OMPVV_MODULE_REQUIRES_LINE
         ln = ln
       END IF
 
-      call test_offloading_probe()
-      IF (ompvv_isHost) THEN
+      IF (ompvv_isHost == ompvv_state_uninit) &
+        call test_offloading_probe()
+      IF (ompvv_isHost == ompvv_state_true) THEN
         OMPVV_INFOMSG_HELPER("Test is running on host",clean ,ln)
       ELSE
         OMPVV_INFOMSG_HELPER("Test is running on device",clean ,ln)
@@ -159,7 +165,7 @@ OMPVV_MODULE_REQUIRES_LINE
       LOGICAL :: test_and_set_offloading
 
       call test_offloading(fn, ln)
-      test_and_set_offloading = .not. ompvv_isHost
+      test_and_set_offloading = ompvv_isHost == ompvv_state_true
     end function test_and_set_offloading
 
     ! Function to test an error and register in the error variable
@@ -247,14 +253,18 @@ OMPVV_MODULE_REQUIRES_LINE
 
       IF (ompvv_errors /= 0) THEN
         OMPVV_INFOMSG(message2dis)
-        IF (ompvv_isHost) THEN
+        IF (ompvv_isHost == ompvv_state_unset) THEN
+          WRITE(*,OMPVV_HEADER_RESULT_SHORT_FMT) TRIM(clean), "failed"
+        ELSE IF (ompvv_isHost == ompvv_state_true) THEN
           WRITE(*,OMPVV_HEADER_RESULT_FMT) TRIM(clean), "failed", "host"
         ELSE
           WRITE(*,OMPVV_HEADER_RESULT_FMT) TRIM(clean), "failed", "device"
         END IF
       ELSE
         OMPVV_INFOMSG("Test ran with no errors")
-        IF (ompvv_isHost) THEN
+        IF (ompvv_isHost == ompvv_state_unset) THEN
+          WRITE(*,OMPVV_HEADER_RESULT_SHORT_FMT) TRIM(clean), "passed"
+        ELSE IF (ompvv_isHost == ompvv_state_true) THEN
           WRITE(*,OMPVV_HEADER_RESULT_FMT) TRIM(clean), "passed", "host"
         ELSE
           WRITE(*,OMPVV_HEADER_RESULT_FMT) TRIM(clean), "passed", "device"
@@ -292,13 +302,15 @@ OMPVV_MODULE_REQUIRES_LINE
       ompvv_sharedEnv = .false.
 
       ! checking for isHost
-      call test_offloading_probe()
+      IF (ompvv_isHost == ompvv_state_uninit) &
+        call test_offloading_probe()
 
 !$omp target map(to: isSharedProb)
       isSharedProb = 1
 !$omp end target
 
-      IF ((.not. ompvv_isHost) .and. isSharedProb == 1)  ompvv_sharedEnv = .true.
+      IF ((ompvv_isHost == ompvv_state_false) .and. isSharedProb == 1) &
+        ompvv_sharedEnv = .true.
     end subroutine test_shared_environment_probe
 
     subroutine test_shared_environment(fn, ln)
