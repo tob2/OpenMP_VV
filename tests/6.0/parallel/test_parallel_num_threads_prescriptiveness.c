@@ -8,10 +8,10 @@
 // ***********
 //
 // This test checks the prescriptiveness modifier for the num_threads clause on the
-// parallel directive. When prescriptiveness(strict) is specified, the implementation
+// parallel directive. When 'strict' is specified, the implementation
 // must respect the requested number of threads when dyn-var is false and sufficient
 // threads are available. The test verifies that when OMP_DYNAMIC is false and
-// num_threads(prescriptiveness(strict): N) is used, exactly N threads execute.
+// num_threads(strict: N) is used, exactly N threads execute.
 //
 //===-------------------------------------------------------------------------===//
 
@@ -22,7 +22,7 @@ int test_num_threads_prescriptiveness() {
   int errors = 0;
   int actual_threads = 0;
 
-  #pragma omp parallel num_threads(prescriptiveness(strict): OMPVV_NUM_THREADS_HOST)
+  #pragma omp parallel num_threads(strict: OMPVV_NUM_THREADS_HOST)
   {
     #pragma omp single
     {
@@ -32,9 +32,9 @@ int test_num_threads_prescriptiveness() {
 
   OMPVV_TEST_AND_SET(errors, actual_threads != OMPVV_NUM_THREADS_HOST);
   OMPVV_INFOMSG_IF(actual_threads == OMPVV_NUM_THREADS_HOST,
-                   "prescriptiveness(strict): Obtained %d threads as requested.", actual_threads);
+                   "prescriptiveness 'strict': Obtained %d threads as requested.", actual_threads);
   OMPVV_ERROR_IF(actual_threads != OMPVV_NUM_THREADS_HOST,
-                 "prescriptiveness(strict): Expected %d threads, got %d.",
+                 "prescriptiveness 'strict': Expected %d threads, got %d.",
                  OMPVV_NUM_THREADS_HOST, actual_threads);
   return errors;
 }
