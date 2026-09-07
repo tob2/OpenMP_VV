@@ -15,7 +15,7 @@
 #include <omp.h>
 #include "ompvv.h"
 
-[[omp :: decl(declare target, enter)]] int on_host;
+[[omp :: decl(declare target, enter)]] int on_host = 1;
 
 [[omp :: decl(declare target)]]
 void update() { on_host = omp_is_initial_device(); }
